@@ -20,16 +20,14 @@ class BinaryDataset(Dataset):
         features = self.x[index, :]
         labels = self.y[index, :]
         
-        # we have 12 feature columns 
-        features = torch.tensor(features, dtype=torch.float32)
-        # there are 5 classes and each class can have a binary value ...
-        # ... either 0 or 1
+        # features = torch.tensor(features, dtype=torch.float32)
+        features =  features.clone().detach()
+        
+        label_dict = {'features': features}
 
-        label_dict = {'features': features, 'labels': labels}
-
-        # for i in range(100):
-        #     key = 'label' + str(i)
-        #     label_dict[key] = torch.tensor(labels[i], dtype=torch.float32)
+        for i in range(100):
+            # label_dict[i] = torch.tensor(labels[i], dtype=torch.float32)
+            label_dict[i] = labels[i].clone().detach()
 
         return label_dict
         
@@ -79,7 +77,7 @@ class NeuralNetworkCoauthor(nn.Module):
         
         x = F.relu(self.fc2(x))
         
-        outs = F.sigmoid(self.out(x)) 
+        outs = torch.sigmoid(self.out(x)) 
 
         return outs
 
@@ -99,7 +97,7 @@ class NeuralNetworkYearVenue(nn.Module):
 
         x = F.relu(self.fc1(x))
         
-        outs = F.sigmoid(self.out(x)) 
+        outs = torch.sigmoid(self.out(x)) 
 
         return outs
 
@@ -140,17 +138,18 @@ def train(model, dataloader, optimizer, loss_fn, train_dataset, device, lstm=Fal
         if lstm:
             features = torch.reshape(features, (features.shape[0], 1, features.shape[1]))    
             
-        # targets = []
-        # for j in range(100):
-        #     targets.append(data[f'label{j}'].to(device))
-        targets = data['labels']
+        targets = []
+        for j in range(100):
+            targets.append(data[j].to(device))
         
         # zero-out the optimizer gradients
         optimizer.zero_grad()
         
         outputs = model(features)
-        
+    
         loss = loss_fn(outputs, targets, loss_func)
+        
+    
         train_running_loss += loss.item()
         
         # backpropagation
