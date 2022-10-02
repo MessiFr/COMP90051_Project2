@@ -24,10 +24,12 @@ class BinaryDataset(Dataset):
         features = torch.tensor(features, dtype=torch.float32)
         # there are 5 classes and each class can have a binary value ...
         # ... either 0 or 1
-        label_dict = {'features': features}
-        for i in range(100):
-            key = 'label' + str(i)
-            label_dict[key] = torch.tensor(labels[i], dtype=torch.float32)
+
+        label_dict = {'features': features, 'labels': labels}
+
+        # for i in range(100):
+        #     key = 'label' + str(i)
+        #     label_dict[key] = torch.tensor(labels[i], dtype=torch.float32)
 
         return label_dict
         
@@ -138,9 +140,10 @@ def train(model, dataloader, optimizer, loss_fn, train_dataset, device, lstm=Fal
         if lstm:
             features = torch.reshape(features, (features.shape[0], 1, features.shape[1]))    
             
-        targets = []
-        for j in range(100):
-            targets.append(data[f'label{j}'].to(device))
+        # targets = []
+        # for j in range(100):
+        #     targets.append(data[f'label{j}'].to(device))
+        targets = data['labels']
         
         # zero-out the optimizer gradients
         optimizer.zero_grad()

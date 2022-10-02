@@ -31,7 +31,7 @@ def find_discard_authors(data):
     
     print("Number of instance without label(remain) : ", remain)
     
-    discard_idx = empty_idx[:len(empty_idx) - remain]
+    discard_idx = empty_idx[remain:]
 
     return discard_idx
 
@@ -58,7 +58,8 @@ def get_word_matrix(data, discard_idx=[], train=True):
         if i in discard_idx and train:
             continue
 
-        instance = data[INDEX]
+        instance = data[i]
+
         for title in instance['title']:
             wmatrix[INDEX, title-1] += 1
         for abstract in instance['abstract']:
@@ -94,7 +95,7 @@ def get_author_matrix(data, discard_idx=[], train=True):
         if i in discard_idx and train:
             continue
 
-        authors = data[INDEX][key]
+        authors = data[i][key]
         
         for au in authors:
             if au < 100:
@@ -104,7 +105,7 @@ def get_author_matrix(data, discard_idx=[], train=True):
                 amatrix[INDEX, au - 100] += 1
 
         INDEX += 1
-            
+        
     return amatrix, y
 
 def get_year_venue_matrix(data, discard_idx=[], train=True):
@@ -123,7 +124,7 @@ def get_year_venue_matrix(data, discard_idx=[], train=True):
         if i in discard_idx and train:
             continue
 
-        venue = data[INDEX]['venue']
+        venue = data[i]['venue']
         
         if venue:
             vmatrix[INDEX, venue] = 1
