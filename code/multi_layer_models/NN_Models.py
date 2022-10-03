@@ -3,7 +3,6 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
-from tqdm import tqdm
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -89,13 +88,16 @@ class NeuralNetworkYearVenue(nn.Module):
         ## nn.Dropout() // 0.1, 0.2 //
 
         self.fc1 = nn.Linear(486, 256)
-        self.out = nn.Linear(256, 100)
+        self.fc2 = nn.Linear(256, 128)
+        self.out = nn.Linear(128, 100)
+
     
     def forward(self, x):
 
         # F.leaky_relu()
 
         x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
         
         outs = torch.sigmoid(self.out(x)) 
 
@@ -120,6 +122,11 @@ def loss_fn(outputs, targets, loss_func="BCE"):
         elif loss_func == "MSE":
             sum_ += nn.MSELoss()(outputs_, targets[i])
 
+        elif loss_func == "MultiLabelMarginLoss":
+            # outputs_ = outputs_.long()
+            target = targets[i].long()
+            sum_ += nn.MultiLabelMarginLoss()(outputs_, target)
+
 
     return sum_ / n_class
     
@@ -128,7 +135,7 @@ def train(model, dataloader, optimizer, loss_fn, train_dataset, device, lstm=Fal
     model.train()
     counter = 0
     train_running_loss = 0.0
-    for _, data in tqdm(enumerate(dataloader), total=int(len(train_dataset)/dataloader.batch_size)):
+    for _, data in enumerate(dataloader):
     
         counter += 1
         

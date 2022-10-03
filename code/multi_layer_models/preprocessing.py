@@ -1,6 +1,7 @@
 import json
 from tqdm import tqdm
 import torch
+import random
 
 # read train data and test data
 f_train = open("../../data/train.json", 'r')
@@ -10,9 +11,11 @@ f_test = open("../../data/test.json", 'r')
 test_data = json.load(f_test)
 
 
-def find_discard_authors(data):
+def find_discard_authors(data, p):
     n_samples = len(data)
     empty_idx = []
+    if p == -1:
+        return []
 
     for i in tqdm(range(n_samples), desc="delet some useless data"):
         authors = data[i]['authors']
@@ -27,13 +30,11 @@ def find_discard_authors(data):
     
     print("Number of instance with label : ", n_samples-len(empty_idx))
     
-    remain = int((0.20250*(n_samples-len(empty_idx))/(1-0.20250)))
+    remain = int((p*(n_samples-len(empty_idx))/(1-p)))
     
     print("Number of instance without label(remain) : ", remain)
-    
-    discard_idx = empty_idx[remain:]
 
-    return discard_idx
+    return random.sample(empty_idx, len(empty_idx) - remain)
 
 
 def get_word_matrix(data, discard_idx=[], train=True):
@@ -158,9 +159,9 @@ def get_year_venue_matrix(data, discard_idx=[], train=True):
 
     return torch.cat((vmatrix, ymatrix), 1)
 
-def for_train(feature):
+def for_train(feature, p):
 
-    di = find_discard_authors(train_data)
+    di = find_discard_authors(train_data, p)
 
     if feature == 'coauthor':
         return get_author_matrix(train_data, discard_idx=di)
