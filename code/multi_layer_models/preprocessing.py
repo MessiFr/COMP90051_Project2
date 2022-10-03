@@ -12,6 +12,9 @@ test_data = json.load(f_test)
 
 
 def find_discard_authors(data, p):
+    # p = 0.20250
+    # p = -1
+
     n_samples = len(data)
     empty_idx = []
     if p == -1:
