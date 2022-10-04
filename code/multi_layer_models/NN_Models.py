@@ -3,6 +3,11 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
+from tqdm import tqdm
+
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.style.use('ggplot')
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -131,7 +136,7 @@ def loss_fn(outputs, targets, loss_func="BCE"):
     return sum_ / n_class
     
 # training function
-def train(model, dataloader, optimizer, loss_fn, train_dataset, device, lstm=False, loss_func="BCE"):
+def train(model, dataloader, optimizer, device, lstm=False, loss_func="BCE"):
     model.train()
     counter = 0
     train_running_loss = 0.0
@@ -164,6 +169,62 @@ def train(model, dataloader, optimizer, loss_fn, train_dataset, device, lstm=Fal
         
         # update optimizer parameters
         optimizer.step()
+
         
     train_loss = train_running_loss / counter
     return train_loss
+
+
+class Model():
+    
+    def __init__(self) -> None:
+        self.train_loss = []
+        self.model = None
+        self.device = None
+        self.loss_fc = None
+        self.lstm = False
+
+    def year_venue_model(self):
+        self.model = NeuralNetworkYearVenue()
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model.to(self.device)
+        self.loss_fc = "BCE"
+        return self.model
+    
+    def coauthor_model(self):
+        self.model = NeuralNetworkCoauthor()
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model.to(self.device)
+        self.loss_fc = "BCE"
+        return self.model
+
+    def abstract_title(self):
+        self.model = SentenceRNN()
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.model.to(self.device)
+        self.loss_fc = "MSE"
+        self.lstm = True
+        return self.model
+
+
+    def train(self, dataloader, optimizer, epochs):
+        for _ in tqdm(range(epochs)):
+    
+            train_epoch_loss = train(
+                self.model, dataloader, optimizer, self.device, lstm=self.lstm, loss_func=self.loss_fc
+            )
+            self.train_loss.append(train_epoch_loss)
+            
+    def save_status(self, fileName):
+        self.statusFile = fileName
+        torch.save(self.model.state_dict(), f'status/{fileName}.pth')
+
+    def plot_loss(self):
+        # plot and save the train loss graph
+        plt.figure(figsize=(10, 7))
+        plt.plot(self.train_loss, color='orange', label='train loss')
+        plt.xlabel('Epochs')
+        plt.ylabel('Loss')
+        plt.legend()
+        # plt.savefig('outputs/multi_head_binary_loss.png')
+        plt.show()
