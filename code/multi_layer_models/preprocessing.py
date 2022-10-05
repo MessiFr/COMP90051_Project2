@@ -251,10 +251,12 @@ def get_year_venue_no_embedding(data, discard_idx=[], train=True, type='tensor')
 
     return np.concatenate((vmatrix, ymatrix), 1)
 
+def get_discard(p):
+    return find_discard_authors(train_data, p)
 
-def for_train(feature, p, embedding=True, type='tensor'):
+def for_train(feature, di, embedding=True, type='tensor', no_label=False):
 
-    di = find_discard_authors(train_data, p)
+    # di = find_discard_authors(train_data, p)
 
     if feature == 'coauthor':
         return get_author_matrix(train_data, discard_idx=di, type=type)
@@ -267,6 +269,9 @@ def for_train(feature, p, embedding=True, type='tensor'):
 
     elif feature == 'word':
         X_all = get_word_matrix(train_data, discard_idx=di, type=type)
+
+    if no_label:
+        return X_all
 
     _, y_all = get_author_matrix(train_data, discard_idx=di, type=type)
 
