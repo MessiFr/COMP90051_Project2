@@ -3,6 +3,8 @@ import torch
 import torch.nn.functional as F
 from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
+from sklearn.linear_model import LogisticRegression
+from preprocessing import for_train
 from tqdm import tqdm
 
 import matplotlib.pyplot as plt
@@ -70,8 +72,9 @@ class NeuralNetworkCoauthor(nn.Module):
         ## nn.Dropout() // 0.1, 0.2 //
 
         self.fc1 = nn.Linear(21146, 1024)
-        self.fc2 = nn.Linear(1024, 512)
-        self.out = nn.Linear(512, 100)
+        # self.fc2 = nn.Linear(1024, 512)
+        # self.out = nn.Linear(512, 100)
+        self.out = nn.Linear(1024, 100)
     
     def forward(self, x):
 
@@ -79,7 +82,7 @@ class NeuralNetworkCoauthor(nn.Module):
 
         x = F.relu(self.fc1(x))
         
-        x = F.relu(self.fc2(x))
+        # x = F.relu(self.fc2(x))
         
         outs = torch.sigmoid(self.out(x)) 
 
@@ -92,16 +95,16 @@ class NeuralNetworkYearVenue(nn.Module):
         ## 1024, 512, 256, 100
         ## nn.Dropout() // 0.1, 0.2 //
 
-        self.fc1 = nn.Linear(486, 256)    
-        self.fc2 = nn.Linear(256, 128)
-        self.out = nn.Linear(128, 100)
+        # self.fc1 = nn.Linear(486, 256)    
+        # self.fc2 = nn.Linear(256, 128)
+        self.out = nn.Linear(486, 100)
 
     def forward(self, x):
 
         # F.leaky_relu()
 
-        x = F.relu(self.fc1(x))
-        x = F.relu(self.fc2(x))
+        # x = F.relu(self.fc1(x))
+        # x = F.relu(self.fc2(x))
         
         outs = torch.sigmoid(self.out(x)) 
 
@@ -252,3 +255,30 @@ class Model():
         plt.legend()
         # plt.savefig('outputs/multi_head_binary_loss.png')
         plt.show()
+
+
+def LogisticRegressionSplit(data, p=0.5):
+
+    X, y_array = for_train('coauthor', p=p, type='numpy')
+
+    y = []
+    for i in y_array:
+        if sum(i) > 0:
+            y.append(1)
+        else:
+            y.append(0)
+
+    clf = LogisticRegression(random_state=0).fit(X, y)
+    
+    print("Accuracy of split (prolific authors) & (no prolific authors)  : ", clf.score(X, y))
+
+    y_pred = clf.predict(data)
+    pa = []
+    nopa = []
+    for i in range(len(y_pred)):
+        if y_pred[i] == 0:
+            nopa.append(i)
+        else:
+            pa.append(i)
+
+    return {'have_pauthor': pa, 'no_pauthor': nopa}

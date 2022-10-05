@@ -1,7 +1,9 @@
+import imp
 import json
 from tqdm import tqdm
 import torch
 import random
+import numpy as np
 
 # read train data and test data
 f_train = open("../../data/train.json", 'r')
@@ -40,7 +42,7 @@ def find_discard_authors(data, p):
     return random.sample(empty_idx, len(empty_idx) - remain)
 
 
-def get_word_matrix(data, discard_idx=[], train=True):
+def get_word_matrix(data, discard_idx=[], train=True, type='tensor'):
     n_samples = len(data)
     n_features = 5000 -1 
 
@@ -52,9 +54,15 @@ def get_word_matrix(data, discard_idx=[], train=True):
     #   XX bert pre-trained / 去掉embedding层 **
 
     if train:
-        wmatrix = torch.zeros([n_samples-len(discard_idx), n_features])
+        if type == 'tensor':
+            wmatrix = torch.zeros([n_samples-len(discard_idx), n_features])
+        elif type == 'numpy':
+            wmatrix = np.ndarray([n_samples-len(discard_idx), n_features])
     else:
-        wmatrix = torch.zeros([n_samples, n_features])
+        if type == 'tensor':
+            wmatrix = torch.zeros([n_samples, n_features])
+        elif type == 'numpy':
+            wmatrix = np.ndarray([n_samples, n_features])
 
     INDEX = 0
     for i in tqdm(range(n_samples), desc="title & abstract"):
@@ -73,7 +81,7 @@ def get_word_matrix(data, discard_idx=[], train=True):
     return wmatrix
 
 
-def get_author_matrix(data, discard_idx=[], train=True):
+def get_author_matrix(data, discard_idx=[], train=True, type='tensor'):
     n_samples = len(data)
 
     # get prolific authors 
@@ -82,17 +90,28 @@ def get_author_matrix(data, discard_idx=[], train=True):
 
 
     if train:
-        y = torch.zeros([n_samples-len(discard_idx), 100])
+        if type == 'tensor':
+            y = torch.zeros([n_samples-len(discard_idx), 100])
+        elif type == 'numpy':
+            y = np.ndarray([n_samples-len(discard_idx), 100])
         key = 'authors'
     else:
         y = None
+        key = 'coauthors'
 
     # get co-author matrix
     if train:
-        amatrix = torch.zeros([n_samples-len(discard_idx), 21245 - 100 + 1])
+        if type == 'tensor':
+            amatrix = torch.zeros([n_samples-len(discard_idx), 21245 - 100 + 1])
+        elif type == 'numpy':
+            amatrix = np.ndarray([n_samples-len(discard_idx), 21245 - 100 + 1])
+
     else:
-        amatrix = torch.zeros([n_samples, 21245 - 100 + 1])
-        key = 'coauthors'
+        if type == 'tensor':
+            amatrix = torch.zeros([n_samples, 21245 - 100 + 1])
+        elif type == 'numpy':
+            amatrix = np.ndarray([n_samples, 21245 - 100 + 1])
+        
 
     INDEX = 0
     for i in tqdm(range(n_samples), desc="authors"):
@@ -112,16 +131,22 @@ def get_author_matrix(data, discard_idx=[], train=True):
         
     return amatrix, y
 
-def get_year_venue_matrix(data, discard_idx=[], train=True):
+def get_year_venue_matrix(data, discard_idx=[], train=True, type='tensor'):
     n_samples = len(data)
 
     # get venue feature
     # embedding
 
     if train:
-        vmatrix = torch.zeros([n_samples-len(discard_idx), 466])
+        if type == 'tensor':
+            vmatrix = torch.zeros([n_samples-len(discard_idx), 466])
+        elif type == 'numpy':
+            vmatrix = np.ndarray([n_samples-len(discard_idx), 466])
     else:
-        vmatrix = torch.zeros([n_samples, 466])
+        if type == 'tensor':
+            vmatrix = torch.zeros([n_samples, 466])
+        elif type == 'numpy':
+            vmatrix = np.ndarray([n_samples, 466])
 
     INDEX = 0
     for i in tqdm(range(n_samples), desc="venue"):
@@ -142,9 +167,15 @@ def get_year_venue_matrix(data, discard_idx=[], train=True):
     # nn.Embedding() // input: batch-size * 1 // output: batch-size * embedding-size
 
     if train:
-        ymatrix = torch.zeros([n_samples-len(discard_idx), 20])
+        if type == 'tensor':
+            ymatrix = torch.zeros([n_samples-len(discard_idx), 20])
+        elif type == 'numpy':
+            ymatrix = np.ndarray([n_samples-len(discard_idx), 20])
     else:
-        ymatrix = torch.zeros([n_samples, 20])
+        if type == 'tensor':
+            ymatrix = torch.zeros([n_samples, 20])
+        elif type == 'numpy':
+            ymatrix = np.ndarray([n_samples, 20])
     
 
     INDEX = 0
@@ -160,18 +191,28 @@ def get_year_venue_matrix(data, discard_idx=[], train=True):
             ymatrix[INDEX, year] = 0
         INDEX += 1
 
-    return torch.cat((vmatrix, ymatrix), 1)
+    if type == 'tensor':
+        return torch.cat((vmatrix, ymatrix), 1)
+    elif type == 'numpy':
+        return np.concatenate((vmatrix, ymatrix), 1)
+    return
 
-def get_year_venue_no_embedding(data, discard_idx=[], train=True):
+def get_year_venue_no_embedding(data, discard_idx=[], train=True, type='tensor'):
     n_samples = len(data)
 
     # get venue feature
     # embedding
 
     if train:
-        vmatrix = torch.zeros([n_samples-len(discard_idx), 1])
+        if type == 'tensor':
+            vmatrix = torch.zeros([n_samples-len(discard_idx), 1])
+        elif type == 'numpy':
+            vmatrix = np.ndarray([n_samples-len(discard_idx), 1])
     else:
-        vmatrix = torch.zeros([n_samples, 1])
+        if type == 'tensor':
+            vmatrix = torch.zeros([n_samples, 1])
+        elif type == 'numpy':
+            vmatrix = np.ndarray([n_samples, 1])
 
     INDEX = 0
     for i in tqdm(range(n_samples), desc="venue"):
@@ -204,48 +245,48 @@ def get_year_venue_no_embedding(data, discard_idx=[], train=True):
 
         year = data[INDEX]['year']
         
-        ymatrix[INDEX, 0] = 1
+        ymatrix[INDEX, 0] = year
             
         INDEX += 1
 
-    return torch.cat((vmatrix, ymatrix), 1)
+    return np.concatenate((vmatrix, ymatrix), 1)
 
 
-def for_train(feature, p, embedding=True):
+def for_train(feature, p, embedding=True, type='tensor'):
 
     di = find_discard_authors(train_data, p)
 
     if feature == 'coauthor':
-        return get_author_matrix(train_data, discard_idx=di)
+        return get_author_matrix(train_data, discard_idx=di, type=type)
 
     elif feature == 'year_venue':
         if embedding:
-            X_all = get_year_venue_matrix(train_data, discard_idx=di)
+            X_all = get_year_venue_matrix(train_data, discard_idx=di, type=type)
         else:
-            X_all = get_year_venue_no_embedding(train_data, discard_idx=di)
+            X_all = get_year_venue_no_embedding(train_data, discard_idx=di, type=type)
 
     elif feature == 'word':
-        X_all = get_word_matrix(train_data, discard_idx=di)
+        X_all = get_word_matrix(train_data, discard_idx=di, type=type)
 
-    _, y_all = get_author_matrix(train_data, discard_idx=di)
+    _, y_all = get_author_matrix(train_data, discard_idx=di, type=type)
 
     return X_all, y_all
 
-def for_kaggle(feature, embedding=True):
+def for_kaggle(feature, embedding=True, type='tensor'):
 
     if feature == 'coauthor':
         
-        X_kaggle, _ = get_author_matrix(test_data, train=False)
+        X_kaggle, _ = get_author_matrix(test_data, train=False, type=type)
 
     elif feature == 'year_venue':
         if embedding:
-            X_kaggle = get_year_venue_matrix(test_data, train=False)
+            X_kaggle = get_year_venue_matrix(test_data, train=False, type=type)
         else:
-            X_kaggle = get_year_venue_no_embedding(test_data, train=False)
+            X_kaggle = get_year_venue_no_embedding(test_data, train=False, type=type)
 
     elif feature == 'word':
         
-        X_kaggle = get_word_matrix(test_data, train=False)
+        X_kaggle = get_word_matrix(test_data, train=False, type=type)
 
     return X_kaggle
 
