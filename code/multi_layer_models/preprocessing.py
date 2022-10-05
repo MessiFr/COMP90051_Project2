@@ -162,7 +162,56 @@ def get_year_venue_matrix(data, discard_idx=[], train=True):
 
     return torch.cat((vmatrix, ymatrix), 1)
 
-def for_train(feature, p):
+def get_year_venue_no_embedding(data, discard_idx=[], train=True):
+    n_samples = len(data)
+
+    # get venue feature
+    # embedding
+
+    if train:
+        vmatrix = torch.zeros([n_samples-len(discard_idx), 1])
+    else:
+        vmatrix = torch.zeros([n_samples, 1])
+
+    INDEX = 0
+    for i in tqdm(range(n_samples), desc="venue"):
+        if i in discard_idx and train:
+            continue
+
+        venue = data[i]['venue']
+        
+        if venue:
+            vmatrix[INDEX, 0] = venue
+        else:
+            vmatrix[INDEX, 0] = 465
+        INDEX += 1
+
+    # get year feature !!!!!
+    # 1-d 编码器 年份 输出特征 -》 256维
+    # distribution of 
+    # nn.Embedding() // input: batch-size * 1 // output: batch-size * embedding-size
+
+    if train:
+        ymatrix = torch.zeros([n_samples-len(discard_idx), 1])
+    else:
+        ymatrix = torch.zeros([n_samples, 1])
+    
+
+    INDEX = 0
+    for i in tqdm(range(n_samples), desc="year"):
+        if i in discard_idx and train:
+            continue
+
+        year = data[INDEX]['year']
+        
+        ymatrix[INDEX, 0] = 1
+            
+        INDEX += 1
+
+    return torch.cat((vmatrix, ymatrix), 1)
+
+
+def for_train(feature, p, embedding=True):
 
     di = find_discard_authors(train_data, p)
 
@@ -170,7 +219,10 @@ def for_train(feature, p):
         return get_author_matrix(train_data, discard_idx=di)
 
     elif feature == 'year_venue':
-        X_all = get_year_venue_matrix(train_data, discard_idx=di)
+        if embedding:
+            X_all = get_year_venue_matrix(train_data, discard_idx=di)
+        else:
+            X_all = get_year_venue_no_embedding(train_data, discard_idx=di)
 
     elif feature == 'word':
         X_all = get_word_matrix(train_data, discard_idx=di)
@@ -179,15 +231,17 @@ def for_train(feature, p):
 
     return X_all, y_all
 
-def for_kaggle(feature):
+def for_kaggle(feature, embedding=True):
 
     if feature == 'coauthor':
         
         X_kaggle, _ = get_author_matrix(test_data, train=False)
 
     elif feature == 'year_venue':
-        
-        X_kaggle = get_year_venue_matrix(test_data, train=False)
+        if embedding:
+            X_kaggle = get_year_venue_matrix(test_data, train=False)
+        else:
+            X_kaggle = get_year_venue_no_embedding(test_data, train=False)
 
     elif feature == 'word':
         

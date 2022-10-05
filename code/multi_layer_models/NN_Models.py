@@ -92,17 +92,37 @@ class NeuralNetworkYearVenue(nn.Module):
         ## 1024, 512, 256, 100
         ## nn.Dropout() // 0.1, 0.2 //
 
-        self.fc1 = nn.Linear(486, 256)
+        self.fc1 = nn.Linear(486, 256)    
         self.fc2 = nn.Linear(256, 128)
         self.out = nn.Linear(128, 100)
 
-    
     def forward(self, x):
 
         # F.leaky_relu()
 
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
+        
+        outs = torch.sigmoid(self.out(x)) 
+
+        return outs
+
+class NeuralNetworkYearVenueNoEmbedding(nn.Module):
+    def __init__(self):
+        super(NeuralNetworkYearVenueNoEmbedding, self).__init__()
+
+        ## 1024, 512, 256, 100
+        ## nn.Dropout() // 0.1, 0.2 //
+
+        self.fc1 = nn.Linear(2, 64)  
+        self.out = nn.Linear(64, 100)
+
+    def forward(self, x):
+
+        # F.leaky_relu()
+
+        x = F.relu(self.fc1(x))
+        # x = F.relu(self.fc2(x))
         
         outs = torch.sigmoid(self.out(x)) 
 
@@ -157,6 +177,7 @@ def train(model, dataloader, optimizer, device, lstm=False, loss_func="BCE"):
         # zero-out the optimizer gradients
         optimizer.zero_grad()
         
+        # print(features)
         outputs = model(features)
     
         loss = loss_fn(outputs, targets, loss_func)
@@ -184,8 +205,11 @@ class Model():
         self.loss_fc = None
         self.lstm = False
 
-    def year_venue_model(self):
-        self.model = NeuralNetworkYearVenue()
+    def year_venue_model(self, embedding=True):
+        if embedding:
+            self.model = NeuralNetworkYearVenue()
+        else:
+            self.model = NeuralNetworkYearVenueNoEmbedding()
         self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         self.model.to(self.device)
         self.loss_fc = "BCE"
