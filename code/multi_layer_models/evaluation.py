@@ -67,7 +67,7 @@ def kaggle_predict(model, X_kaggle, fileName, lstm=False):
     with open(f'outputs/{fileName}.json', 'w') as fp:
         json.dump(predict_dict, fp)
 
-def predict(author, year_venue, abstracts_title, YEAR_VENUE_WEIGHT, COAUTHOR_WEIGHT, SENTENCE_WEIGHT, THRESHOLD):
+def predict(author, COAUTHOR_WEIGHT, year_venue, YEAR_VENUE_WEIGHT, abstracts_title, SENTENCE_WEIGHT, THRESHOLD):
     def get_weighted_value(i, j):
         val1 = year_venue[i][j] * YEAR_VENUE_WEIGHT
         val2 = author[i][j] * COAUTHOR_WEIGHT
@@ -181,7 +181,8 @@ class LogisticRegressionPredictModel():
                 
                 x = np.array([[x1, x2, x3]])
                 au = self.model.predict(x)
-                if au:
+                
+                if au[0]:
                     author += str(j) + " "
                     
             if author:
