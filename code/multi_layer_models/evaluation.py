@@ -43,7 +43,8 @@ def evaluation(model, X_test, y_test, thresholds):
     return f1_scores
 
 
-def kaggle_predict(model, X_kaggle, fileName, lstm=False):
+
+def kaggle_predict(model, X_kaggle, fileName, lstm=False, num_features=4999):
     predict_dict = {}
 
     key = 0
@@ -51,7 +52,7 @@ def kaggle_predict(model, X_kaggle, fileName, lstm=False):
         
         features = test_sample
         if lstm:
-            features = torch.reshape(features, (1, 1, 4999))
+            features = torch.reshape(features, (1, 1, num_features))
         
         outputs = model(features)
         outputs = outputs.squeeze()
@@ -204,3 +205,4 @@ def print_scores(y_test, y_pred):
     print('The f1       score of prediction is : {}'.format(f1_score(y_test, y_pred, average='weighted')))
 
     
+

@@ -1,4 +1,4 @@
-import imp
+from gensim.models.doc2vec import Doc2Vec, TaggedDocument
 import json
 from tqdm import tqdm
 import torch
@@ -11,6 +11,26 @@ train_data = json.load(f_train)
 
 f_test = open("../../data/test.json", 'r')
 test_data = json.load(f_test)
+
+def get_remain_index(discard):
+    remain = []
+    for i in range(len(train_data)):
+        if not i in discard:
+            remain.append(i)
+    return remain
+
+def coauthor_map():
+    coauthor_map_ = {}
+    encoding = 0
+    for i in range(len(test_data)):
+        for au in test_data[i]['coauthors']:
+            if not au in coauthor_map_:
+                coauthor_map_[au] = encoding
+                encoding += 1
+    return coauthor_map_
+
+AUTHORIDMAP = coauthor_map()
+
 
 
 def find_discard_authors(data, p):
@@ -316,3 +336,45 @@ def transform_labels(data, threshold):
         labels.append(transform_to_label(data[i], threshold))
     
     return labels
+
+
+def tagged_document(list_of_list_of_words):
+   for i, list_of_words in enumerate(list_of_list_of_words):
+      yield TaggedDocument(list_of_words, [i])
+
+def vector_for_learning(model, input_docs):
+    sents = input_docs
+    targets, feature_vectors = zip(*[(doc.tags[0], model.infer_vector(doc.words)) for doc in tqdm(sents, total=len(sents))])
+    return targets, feature_vectors
+
+def get_sentence_matrix(index_list=None, type='kaggle'):
+
+    model = Doc2Vec.load('data/movieModel.d2v')
+    
+    sentence_list = []
+
+    if type == 'kaggle':
+        for i in tqdm(range(len(train_data)), total=len(train_data), desc='Get Sentences'):
+            if i in index_list:
+                instance = train_data[i]
+                sentence = []
+                for i in instance['abstract']:
+                    sentence.append(str(i))
+                for j in instance['title']:
+                    sentence.append(str(j))
+                sentence_list.append(sentence)
+    else:
+        for i in tqdm(range(len(test_data)), total=len(test_data), desc='Get Sentences'):
+            instance = train_data[i]
+            sentence = []
+            for i in instance['abstract']:
+                sentence.append(str(i))
+            for j in instance['title']:
+                sentence.append(str(j))
+            sentence_list.append(sentence)
+
+    train_documents = list(tagged_document(sentence_list))
+    
+    _, features = vector_for_learning(model, train_documents)
+    
+    return torch.tensor(np.array([i for i in features]))
