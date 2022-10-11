@@ -6,6 +6,11 @@ from preprocessing import *
 from NN_Models import *
 
 def get_f1(model, X_test, y_test, threshold):
+    '''
+    X_test: tensor([n_sample, n_feature]) || np.array([n_sample, n_feature])
+    y_test: tensor([n_sample, 100]) || np.array([n_sample, n_feature])
+    threshold: int
+    '''
     
     _, test_dataloader = BinaryDataLoader(X_test, y_test, shuffle=False, batch_size=1)
 
@@ -31,6 +36,11 @@ def get_f1(model, X_test, y_test, threshold):
     return predict_list, f1_score(target_list, predict_list, average='weighted')
 
 def evaluation(model, X_test, y_test, thresholds):
+    '''
+    X_test: tensor([n_sample, n_feature]) || np.array([n_sample, n_feature])
+    y_test: tensor([n_sample, 100]) || np.array([n_sample, n_feature])
+    thresholds: int[]
+    '''
     f1_scores = []
 
     for i in tqdm(range(len(thresholds))):
@@ -45,6 +55,12 @@ def evaluation(model, X_test, y_test, thresholds):
 
 
 def kaggle_predict(model, X_kaggle, fileName, lstm=False, num_features=4999):
+    '''
+    X_kaggle: tensor([n_sample, n_feature]) || np.array([n_sample, n_feature])
+    fileName: string
+    lstm: True for RNN
+    num_features: int
+    '''
     predict_dict = {}
 
     key = 0
@@ -69,6 +85,15 @@ def kaggle_predict(model, X_kaggle, fileName, lstm=False, num_features=4999):
         json.dump(predict_dict, fp)
 
 def predict(author, COAUTHOR_WEIGHT, year_venue, YEAR_VENUE_WEIGHT, abstracts_title, SENTENCE_WEIGHT, THRESHOLD):
+    '''
+    author: predict logits of author, [n_samples, 100]
+    COAUTHOR_WEIGHT: float
+    year_venue: predict logits of year & venue, [n_samples, 100]
+    YEAR_VENUE_WEIGHT: float
+    abstracts_title: predict logits of abstracts_title, [n_samples, 100]
+    SENTENCE_WEIGHT: float
+    THRESHOLD: int
+    '''
     def get_weighted_value(i, j):
         val1 = year_venue[i][j] * YEAR_VENUE_WEIGHT
         val2 = author[i][j] * COAUTHOR_WEIGHT
@@ -100,6 +125,9 @@ def predict(author, COAUTHOR_WEIGHT, year_venue, YEAR_VENUE_WEIGHT, abstracts_ti
     return kaggle_predict
 
 def to_list(matrix):
+    '''
+    Transfer the matrix of label (y) to list of stirng (test prolific authors)
+    '''
     res_list = []
     for i in range(len(matrix)):
         pred = ""
